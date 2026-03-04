@@ -16,32 +16,43 @@ st.set_page_config(page_title="GenYatra | AI Travel Architect", layout="wide")
 SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
 GEMINI_KEY = st.secrets.get("GEMINI_API_KEY", "") 
 
-# --- 3. PROFESSIONAL DARK MODE CSS ---
+# --- 3. THEME-AGNOSTIC MINIMALIST CSS ---
 st.markdown("""
     <style>
+    /* Hide Streamlit Clutter */
     #MainMenu, footer, header, [data-testid="stDecoration"] { display: none !important; }
     
-    .stApp { background-color: #0B0F19 !important; color: #F8FAFC !important; }
-    
+    /* Make backgrounds transparent so they adapt to Streamlit's Light/Dark Mode natively */
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
     }
     
-    [data-testid="stMarkdownContainer"] *, p, h1, h2, h3, h4, li, span, div { color: #F8FAFC !important; }
-    
-    [data-testid="stChatMessage"] { background-color: #111827 !important; border-radius: 8px; padding: 20px; border: 1px solid #1E293B; margin-bottom: 16px; }
-    
-    [data-testid="stChatInput"] { background-color: #0F172A !important; border: 1px solid #334155 !important; border-radius: 8px !important; }
-    [data-testid="stChatInput"] textarea { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; background-color: transparent !important; }
-    
-    [data-testid="stDownloadButton"] button, .stButton button {
-        background-color: #FF9933 !important; color: #000000 !important; border: none !important;
-        font-weight: 800 !important; letter-spacing: 1px; transition: all 0.3s ease;
+    /* Theme-Agnostic Chat Bubbles using subtle transparency */
+    [data-testid="stChatMessage"] { 
+        background-color: rgba(128, 128, 128, 0.05) !important; 
+        border-radius: 8px; 
+        padding: 20px; 
+        border: 1px solid rgba(128, 128, 128, 0.2); 
+        margin-bottom: 16px; 
     }
-    [data-testid="stDownloadButton"] button:hover, .stButton button:hover { background-color: #e68a2e !important; transform: translateY(-2px); }
     
-    .brand-title { font-size: 3rem; font-weight: 800; letter-spacing: -1px; text-align: center; margin-bottom: 0px; color: #FFFFFF; }
-    .brand-subtitle { color: #64748B !important; font-size: 1rem; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; text-align: center; margin-top: 5px; margin-bottom: 30px; }
+    /* Theme-Agnostic Input Box */
+    [data-testid="stChatInput"] { 
+        background-color: rgba(128, 128, 128, 0.03) !important; 
+        border: 1px solid rgba(128, 128, 128, 0.2) !important; 
+        border-radius: 8px !important; 
+    }
+    
+    /* Header Branding - Color removed so it automatically flips black/white based on theme */
+    .brand-title { 
+        font-size: 3rem; font-weight: 800; letter-spacing: -1px; 
+        text-align: center; margin-bottom: 0px; 
+    }
+    .brand-subtitle { 
+        color: #64748B !important; font-size: 1rem; font-weight: 500; 
+        letter-spacing: 4px; text-transform: uppercase; 
+        text-align: center; margin-top: 5px; margin-bottom: 30px; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
