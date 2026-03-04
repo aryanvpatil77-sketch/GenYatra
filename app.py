@@ -6,32 +6,22 @@ from google import genai
 from google.genai import types
 import re
 import requests
+import time
 from fpdf import FPDF
 
 # --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="GenYatra | AI Travel Architect", page_icon="✈️", layout="wide")
+st.set_page_config(page_title="GenYatra | AI Travel Architect", layout="wide")
 
-# --- 2. CLOUD-SAFE API KEYS (Pulls from Streamlit Secrets) ---
+# --- 2. CLOUD-SAFE API KEYS (Pulls from Secrets) ---
 SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
 GEMINI_KEY = st.secrets.get("GEMINI_API_KEY", "") 
 
-# --- 3. CLEAN LUXURY DARK MODE CSS ---
+# --- 3. PROFESSIONAL DARK MODE CSS ---
 st.markdown("""
     <style>
     #MainMenu, footer, header, [data-testid="stDecoration"] { display: none !important; }
     
-    .stApp {
-        background: linear-gradient(-45deg, #0B0F19, #111827, #1E1B4B, #000000) !important;
-        background-size: 400% 400% !important;
-        animation: gradientBG 15s ease infinite !important;
-        height: 100vh;
-    }
-    
-    @keyframes gradientBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+    .stApp { background-color: #0B0F19 !important; color: #F8FAFC !important; }
     
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
@@ -39,33 +29,38 @@ st.markdown("""
     
     [data-testid="stMarkdownContainer"] *, p, h1, h2, h3, h4, li, span, div { color: #F8FAFC !important; }
     
-    [data-testid="stChatMessage"] { 
-        background-color: rgba(15, 23, 42, 0.75) !important; 
-        backdrop-filter: blur(16px) !important; 
-        -webkit-backdrop-filter: blur(16px) !important;
-        border-radius: 12px; padding: 24px; 
-        border: 1px solid rgba(255, 255, 255, 0.1); 
-        margin-bottom: 16px; 
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
+    [data-testid="stChatMessage"] { background-color: #111827 !important; border-radius: 8px; padding: 20px; border: 1px solid #1E293B; margin-bottom: 16px; }
     
-    [data-testid="stChatInput"] { background-color: rgba(0, 0, 0, 0.9) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 12px !important; }
+    [data-testid="stChatInput"] { background-color: #0F172A !important; border: 1px solid #334155 !important; border-radius: 8px !important; }
     [data-testid="stChatInput"] textarea { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; background-color: transparent !important; }
-    [data-testid="stChatInput"] svg { fill: #FF9933 !important; }
+    
+    [data-testid="stDownloadButton"] button, .stButton button {
+        background-color: #FF9933 !important; color: #000000 !important; border: none !important;
+        font-weight: 800 !important; letter-spacing: 1px; transition: all 0.3s ease;
+    }
+    [data-testid="stDownloadButton"] button:hover, .stButton button:hover { background-color: #e68a2e !important; transform: translateY(-2px); }
+    
+    .brand-title { font-size: 3rem; font-weight: 800; letter-spacing: -1px; text-align: center; margin-bottom: 0px; color: #FFFFFF; }
+    .brand-subtitle { color: #64748B !important; font-size: 1rem; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; text-align: center; margin-top: 5px; margin-bottom: 30px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. SIMPLE HEADER ---
-st.markdown("""
-    <div style='text-align: center; padding: 1rem 0; margin-bottom: 1rem;'>
-        <h1 style='font-size: 3.5rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 0px;'>✈️ GenYatra</h1>
-        <p style='color: #FF9933 !important; font-size: 1.1rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-top: 5px;'>AI Travel Architect</p>
-    </div>
-""", unsafe_allow_html=True)
+# --- 4. CLEAN PROFESSIONAL HEADER ---
+st.markdown("<div class='brand-title'>GenYatra</div>", unsafe_allow_html=True)
+st.markdown("<div class='brand-subtitle'>AI Travel Architect</div>", unsafe_allow_html=True)
 
-# --- 5. ADVANCED ROUND-TRIP FLIGHT ENGINE ---
+# --- 5. DYNAMIC CONTEXTUAL AVATARS ---
+def get_ai_icon(text):
+    t = text.lower()
+    if "itinerary" in t or "day 1" in t or "blueprint" in t: return ":material/description:" 
+    if "destination" in t or "where" in t or "city" in t: return ":material/pin_drop:" 
+    if "budget" in t or "cost" in t or "inr" in t: return ":material/payments:" 
+    if "welcome" in t or "hello" in t: return ":material/waving_hand:" 
+    return ":material/support_agent:" 
+
+# --- 6. ADVANCED ROUND-TRIP FLIGHT ENGINE ---
 def get_live_flights(origin, dest, out_date, ret_date):
-    if not SERPAPI_KEY: return "### ✈️ Live Flight Data\n*Error: SerpApi Key missing in deployment secrets.*\n\n---\n\n"
+    if not SERPAPI_KEY: return "### Live Flight Data\n*Error: SerpApi Key missing in deployment secrets.*\n\n---\n\n"
     url = "https://serpapi.com/search.json"
     params = {
         "engine": "google_flights", "departure_id": origin, "arrival_id": dest,
@@ -83,32 +78,32 @@ def get_live_flights(origin, dest, out_date, ret_date):
             out_dep = outbound.get("departure_airport", {}).get("time", "Unknown Time")
             out_arr = outbound.get("arrival_airport", {}).get("time", "Unknown Time")
             
-            output = f"### ✈️ Live Round-Trip Flight Itinerary\n"
+            output = f"### Live Round-Trip Flight Itinerary\n"
             output += f"**Total Price:** INR {price} (Round-Trip per person)\n\n"
-            output += f"**🛫 Outbound Flight ({out_date}):**\n"
-            output += f"- **Airline:** {out_airline}\n"
-            output += f"- **Departure:** {out_dep[:16] if isinstance(out_dep, str) else out_dep}\n"
-            output += f"- **Arrival:** {out_arr[:16] if isinstance(out_arr, str) else out_arr}\n\n"
+            output += f"**Outbound Flight ({out_date}):**\n"
+            output += f"- Airline: {out_airline}\n"
+            output += f"- Departure: {out_dep[:16] if isinstance(out_dep, str) else out_dep}\n"
+            output += f"- Arrival: {out_arr[:16] if isinstance(out_arr, str) else out_arr}\n\n"
             
             if len(flight.get("flights", [])) > 1:
                 ret_flight = flight.get("flights", [])[-1]
                 ret_airline = ret_flight.get("airline", out_airline)
                 ret_dep = ret_flight.get("departure_airport", {}).get("time", "Unknown Time")
                 ret_arr = ret_flight.get("arrival_airport", {}).get("time", "Unknown Time")
-                output += f"**🛬 Return Flight ({ret_date}):**\n"
-                output += f"- **Airline:** {ret_airline}\n"
-                output += f"- **Departure:** {ret_dep[:16] if isinstance(ret_dep, str) else ret_dep}\n"
-                output += f"- **Arrival:** {ret_arr[:16] if isinstance(ret_arr, str) else ret_arr}\n\n"
+                output += f"**Return Flight ({ret_date}):**\n"
+                output += f"- Airline: {ret_airline}\n"
+                output += f"- Departure: {ret_dep[:16] if isinstance(ret_dep, str) else ret_dep}\n"
+                output += f"- Arrival: {ret_arr[:16] if isinstance(ret_arr, str) else ret_arr}\n\n"
             else:
-                output += f"**🛬 Return Flight ({ret_date}):**\n- Matches outbound airline. Check final booking for exact return timings.\n\n"
+                output += f"**Return Flight ({ret_date}):**\n- Matches outbound airline.\n\n"
                 
             output += "---\n\n"
             return output
-        return f"### ✈️ Live Flight Data\n*No direct live pricing found for {out_date} to {ret_date}.*\n\n---\n\n"
+        return f"### Live Flight Data\n*No direct live pricing found for {out_date} to {ret_date}.*\n\n---\n\n"
     except Exception as e:
         return ""
 
-# --- 6. SMART PDF FORMATTER ---
+# --- 7. SMART PDF FORMATTER ---
 def create_pdf(text_content):
     pdf = FPDF()
     pdf.add_page()
@@ -117,8 +112,8 @@ def create_pdf(text_content):
     pdf.set_text_color(11, 15, 25) 
     pdf.cell(0, 15, "GenYatra Master Itinerary", ln=True, align='C')
     pdf.set_font("Arial", 'I', 12)
-    pdf.set_text_color(255, 153, 51) 
-    pdf.cell(0, 10, "Your AI Travel Architect", ln=True, align='C')
+    pdf.set_text_color(100, 116, 139) 
+    pdf.cell(0, 10, "AI Travel Architect", ln=True, align='C')
     pdf.ln(10)
     
     pdf.set_text_color(0, 0, 0) 
@@ -147,7 +142,7 @@ def create_pdf(text_content):
             
     return pdf.output(dest="S").encode("latin-1")
 
-# --- 7. AI INITIALIZATION & SYSTEM PROMPT ---
+# --- 8. AI INITIALIZATION & SYSTEM PROMPT ---
 if not GEMINI_KEY:
     st.error("Deployment Error: Missing GEMINI_API_KEY in Streamlit Secrets.")
     st.stop()
@@ -157,31 +152,25 @@ if "client" not in st.session_state:
 
 SYSTEM_PROMPT = """
 You are GenYatra, an elite, PROACTIVE AI Travel Architect. Your job is to make planning effortless for the client.
+Do not use emojis in your responses. Keep your tone highly professional, concise, and consultative.
 
 CRITICAL DIRECTIVE ON DATES:
-If a client says "March", DO NOT ask them for exact dates. YOU are the architect. Pick a reasonable 4 to 5 day block (e.g., March 12th to March 16th) on their behalf so you can run the live flight engine. Tell them: "I've selected March 12-16 to optimize your fares."
+If a client says "March", DO NOT ask them for exact dates. Pick a reasonable 4 to 5 day block (e.g., March 12th to March 16th) on their behalf to run the flight engine.
 
 PHASE 1: THE QUICK INTERVIEW
-You must know: Destination, Duration/Month, Who is traveling/Budget, and Transport Mode (If flight, get the Origin City).
-DO NOT interrogate them endlessly. If they give you enough info in their first prompt, immediately generate the itinerary. 
+You must know: Destination, Duration/Month, Who is traveling/Budget, and Transport Mode.
+If they give you enough info in their first prompt, immediately generate the itinerary. 
 
 PHASE 2: THE MASTER ITINERARY
-- HOTEL LOGIC: You MUST explicitly change their hotel if they travel to a new region/city. Provide 3-5 real hotel options with estimated INR prices for every location change.
-- RESTAURANTS: Name a REAL, specific restaurant for every meal with estimated INR prices.
+- HOTEL LOGIC: You MUST explicitly change their hotel if they travel to a new region/city. Provide 3-5 real hotel options.
+- RESTAURANTS: Name a REAL, specific restaurant for every meal.
 
-PHASE 3: THE TOTAL TRIP ESTIMATE (CRITICAL)
-At the very bottom of the itinerary, before the system tags, you MUST provide a "Total Estimated Budget" breakdown table.
-It must include estimated costs for: 
-1. Flights (Estimate it based on the route, noting live prices are at the top)
-2. Hotels
-3. Local Transport (Taxis, rentals)
-4. Food & Dining
-5. Activities & Passes
-Total Estimated Trip Cost: INR [Sum]
+PHASE 3: THE TOTAL TRIP ESTIMATE
+At the bottom, provide a "Total Estimated Budget" breakdown table.
 
-SYSTEM TAGS (Output at the very bottom):
-[FLIGHT_SEARCH: {ORIGIN_IATA}, {DESTINATION_IATA}, {YYYY-MM-DD}, {YYYY-MM-DD}] -> ONLY output this if they are flying. YOU must pick the YYYY-MM-DD dates if they only gave you a month. Assume year is 2026.
-[PDF_READY] -> Output this tag at the very bottom of the completed itinerary.
+SYSTEM TAGS:
+[FLIGHT_SEARCH: {ORIGIN_IATA}, {DESTINATION_IATA}, {YYYY-MM-DD}, {YYYY-MM-DD}] -> ONLY output this if they are flying. Assume year is 2026.
+[PDF_READY] -> Output this tag at the very bottom.
 """
 
 if "chat_session" not in st.session_state:
@@ -189,23 +178,27 @@ if "chat_session" not in st.session_state:
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
     )
-    st.session_state.messages = [{"role": "assistant", "content": "Welcome to GenYatra. Where are you dreaming of traveling to, and who will be joining you?", "hidden": False}]
+    st.session_state.messages = [{"role": "assistant", "content": "Welcome to GenYatra. Where are you dreaming of traveling to, and who will be joining you?", "icon": ":material/waving_hand:"}]
 
 for message in st.session_state.messages:
-    if not message.get("hidden", False):
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    icon = message.get("icon", ":material/person:") if message["role"] == "assistant" else ":material/person:"
+    with st.chat_message(message["role"], avatar=icon):
+        st.markdown(message["content"])
 
-# --- 8. THE CONTINUOUS CHAT LOOP ---
+# --- 9. THE CONTINUOUS CHAT LOOP ---
 user_input = st.chat_input("E.g., Plan a 4-day trip to Goa from Pune in March...")
 
 if user_input:
-    st.chat_message("user").markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input, "hidden": False})
+    with st.chat_message("user", avatar=":material/person:"):
+        st.markdown(user_input)
+    st.session_state.messages.append({"role": "user", "content": user_input, "icon": ":material/person:"})
     
-    with st.chat_message("assistant"):
-        with st.spinner("GenYatra is securing your flights and architecting the trip..."):
+    with st.chat_message("assistant", avatar=":material/psychology:"):
+        with st.status("Analyzing your travel preferences...", expanded=True) as status:
+            time.sleep(1) 
+            
             try:
+                status.update(label="Architecting your personalized itinerary...", state="running")
                 response = st.session_state.chat_session.send_message(user_input)
                 clean_text = response.text
                 live_flight_text = ""
@@ -213,6 +206,7 @@ if user_input:
                 
                 flight_match = re.search(r'\[FLIGHT_SEARCH:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]', clean_text, re.IGNORECASE)
                 if flight_match:
+                    status.update(label="Searching live flight fares & timings...", state="running")
                     origin, dest, out_date, ret_date = flight_match.group(1).strip(), flight_match.group(2).strip(), flight_match.group(3).strip(), flight_match.group(4).strip()
                     live_flight_text = get_live_flights(origin, dest, out_date, ret_date)
                     clean_text = re.sub(r'\[FLIGHT_SEARCH:\s*[^\]]+\]', '', clean_text, flags=re.IGNORECASE).strip()
@@ -223,18 +217,28 @@ if user_input:
 
                 final_output = live_flight_text + clean_text
                 
-                st.session_state.messages.append({"role": "assistant", "content": final_output, "hidden": False})
-                st.markdown(final_output)
+                status.update(label="Finalizing travel blueprint...", state="complete", expanded=False)
                 
-                if show_pdf_button:
-                    pdf_bytes = create_pdf(final_output)
-                    st.download_button(
-                        label="📄 Download Complete Itinerary (PDF)",
-                        data=pdf_bytes,
-                        file_name="GenYatra_Master_Itinerary.pdf",
-                        mime="application/pdf",
-                        key=f"pdf_btn_{len(st.session_state.messages)}"
-                    )
-
             except Exception as e:
-                st.error(f"Engine Failure: {str(e)}")
+                status.update(label="Engine Failure", state="error", expanded=False)
+                st.error(f"Error: {str(e)}")
+                st.stop()
+        
+        def stream_data(text):
+            for word in text.split(" "):
+                yield word + " "
+                time.sleep(0.02)
+                
+        st.write_stream(stream_data(final_output))
+        final_ai_icon = get_ai_icon(final_output)
+        st.session_state.messages.append({"role": "assistant", "content": final_output, "icon": final_ai_icon})
+        
+        if show_pdf_button:
+            pdf_bytes = create_pdf(final_output)
+            st.download_button(
+                label="Download Master Itinerary (PDF)",
+                data=pdf_bytes,
+                file_name="GenYatra_Master_Itinerary.pdf",
+                mime="application/pdf",
+                key=f"pdf_btn_{len(st.session_state.messages)}"
+            )
