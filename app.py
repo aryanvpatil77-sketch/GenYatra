@@ -13,13 +13,8 @@ from fpdf import FPDF
 st.set_page_config(page_title="GenYatra | AI Travel Architect", layout="wide", initial_sidebar_state="expanded")
 
 # --- 2. DEPLOYMENT API KEYS ---
-# --- 2. DEPLOYMENT API KEYS ---
-# This safely pulls your secure keys directly from the Streamlit Cloud dashboard
 SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
-
-# We check for both naming conventions just in case you named it differently in the dashboard
 GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", "")) 
-
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
@@ -34,28 +29,34 @@ st.markdown("""
         background: transparent !important; background-color: transparent !important; 
     }
     
+    /* Pull the app up to remove the massive default top spacing */
+    .block-container {
+        padding-top: 3rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
     /* Kill the annoying "Press Enter to apply" text */
     [data-testid="InputInstructions"] { display: none !important; }
     
-    /* Typography & Branding */
-    .brand-container { text-align: center; margin-top: 5vh; margin-bottom: 30px; }
-    .welcome-to { color: #FF9933 !important; font-size: 1.1rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin: 0; }
-    .genyatra-title { font-size: 3.8rem; font-weight: 900; letter-spacing: -1.5px; margin-top: -10px; margin-bottom: 0px; }
+    /* Typography & Branding (Tightened for single-screen view) */
+    .brand-container { text-align: center; margin-top: 0vh; margin-bottom: 15px; }
+    .welcome-to { color: #FF9933 !important; font-size: 1rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin: 0; }
+    .genyatra-title { font-size: 3.2rem; font-weight: 900; letter-spacing: -1.5px; margin-top: -5px; margin-bottom: 0px; }
     
-    .auth-header { text-align: center; font-size: 1.8rem; font-weight: 700; margin-bottom: 20px; }
-    .divider { text-align: center; color: rgba(128,128,128,0.5); margin: 20px 0; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; }
+    .auth-header { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+    .divider { text-align: center; color: rgba(128,128,128,0.5); margin: 15px 0; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; }
 
     /* Remove default Streamlit form box outline to keep UI clean */
     [data-testid="stForm"] { border: none !important; padding: 0px !important; background-color: transparent !important; box-shadow: none !important; }
 
-    /* Custom Auth Buttons */
+    /* Custom Auth Buttons (Slimmer margins) */
     .login-btn-container [data-testid="baseButton-primary"] {
         background-color: #1A73E8 !important; color: #FFFFFF !important; border-radius: 8px !important;
-        padding: 10px 24px !important; border: none !important; font-weight: 600 !important;
+        padding: 8px 24px !important; border: none !important; font-weight: 600 !important; margin-top: 5px !important;
     }
     .login-btn-container [data-testid="baseButton-secondary"] {
         background-color: transparent !important; border-radius: 8px !important; border: 1px solid rgba(128,128,128,0.3) !important;
-        padding: 10px 24px !important; font-weight: 500 !important;
+        padding: 8px 24px !important; font-weight: 500 !important; margin-top: 5px !important;
     }
     
     /* Gemini Dynamic Home Screen Typography */
@@ -295,7 +296,7 @@ if not st.session_state.user:
                 password = st.text_input("Password", type="password")
                 st.write("")
                 if st.button("Sign In", type="primary", use_container_width=True):
-                    if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY":
+                    if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY" or not FIREBASE_API_KEY:
                         st.error("Missing Firebase Key in code.")
                     else:
                         res = sign_in(email, password)
@@ -317,7 +318,7 @@ if not st.session_state.user:
                 password = st.text_input("Password", type="password")
                 st.write("")
                 if st.button("Sign Up", type="primary", use_container_width=True):
-                    if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY":
+                    if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY" or not FIREBASE_API_KEY:
                         st.error("Missing Firebase Key in code.")
                     else:
                         res = sign_up(email, password)
