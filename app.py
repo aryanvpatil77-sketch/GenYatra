@@ -13,10 +13,15 @@ from fpdf import FPDF
 st.set_page_config(page_title="GenYatra | AI Travel Architect", layout="wide", initial_sidebar_state="expanded")
 
 # --- 2. DEPLOYMENT API KEYS ---
-SERPAPI_KEY = "053f69d1f094387187733ae72d8a42a3bd7cc06f31316aa29a43230a3d80827a"
-GEMINI_KEY = "PASTE_YOUR_GEMINI_KEY_HERE" 
-FIREBASE_API_KEY = "PASTE_FIREBASE_WEB_API_KEY"
-FIREBASE_DB_URL = "PASTE_FIREBASE_DATABASE_URL"
+# --- 2. DEPLOYMENT API KEYS ---
+# This safely pulls your secure keys directly from the Streamlit Cloud dashboard
+SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
+
+# We check for both naming conventions just in case you named it differently in the dashboard
+GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", "")) 
+
+FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
+FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
 # --- 3. PREMIUM THEME-AGNOSTIC CSS ---
 st.markdown("""
