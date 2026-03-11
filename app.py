@@ -7,80 +7,180 @@ from google.genai import types
 import re
 import requests
 import time
+import os
+import base64
 from fpdf import FPDF
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="GenYatra | AI Travel Architect", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. DEPLOYMENT API KEYS ---
+# --- 2. LOGO INTEGRATION ---
+LOGO_FILE = "logo.jpeg"
+encoded_logo = ""
+if os.path.exists(LOGO_FILE):
+    with open(LOGO_FILE, "rb") as image_file:
+        encoded_logo = base64.b64encode(image_file.read()).decode()
+
+# --- 3. DEPLOYMENT API KEYS ---
 SERPAPI_KEY = st.secrets.get("SERPAPI_KEY", "")
 GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", "")) 
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
-# --- 3. PREMIUM THEME-AGNOSTIC CSS ---
+# --- 4. PREMIUM THEME-AGNOSTIC CSS (Aggressive Form & Sidebar Fixes) ---
 st.markdown("""
     <style>
-    /* Hide Streamlit Clutter */
+    @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
+    
+    * { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+
     #MainMenu, footer, header, [data-testid="stDecoration"] { display: none !important; }
     
-    /* Native Dark/Light Mode Adaptability */
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
     }
     
-    /* Pull the app up to remove the massive default top spacing */
-    .block-container {
-        padding-top: 3rem !important;
-        padding-bottom: 2rem !important;
-    }
-    
-    /* Kill the annoying "Press Enter to apply" text */
+    .block-container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
     [data-testid="InputInstructions"] { display: none !important; }
     
-    /* Typography & Branding (Tightened for single-screen view) */
-    .brand-container { text-align: center; margin-top: 0vh; margin-bottom: 15px; }
-    .welcome-to { color: #FF9933 !important; font-size: 1rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin: 0; }
-    .genyatra-title { font-size: 3.2rem; font-weight: 900; letter-spacing: -1.5px; margin-top: -5px; margin-bottom: 0px; }
-    
-    .auth-header { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
-    .divider { text-align: center; color: rgba(128,128,128,0.5); margin: 15px 0; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; }
-
-    /* Remove default Streamlit form box outline to keep UI clean */
-    [data-testid="stForm"] { border: none !important; padding: 0px !important; background-color: transparent !important; box-shadow: none !important; }
-
-    /* Custom Auth Buttons (Slimmer margins) */
-    .login-btn-container [data-testid="baseButton-primary"] {
-        background-color: #1A73E8 !important; color: #FFFFFF !important; border-radius: 8px !important;
-        padding: 8px 24px !important; border: none !important; font-weight: 600 !important; margin-top: 5px !important;
+    /* Animations */
+    @keyframes slideUpFade {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
-    .login-btn-container [data-testid="baseButton-secondary"] {
-        background-color: transparent !important; border-radius: 8px !important; border: 1px solid rgba(128,128,128,0.3) !important;
-        padding: 8px 24px !important; font-weight: 500 !important; margin-top: 5px !important;
-    }
+    .anim-1 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .anim-2 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
+    .anim-3 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
+
+    /* Login Page Styling */
+    .brand-container { text-align: center; margin-top: 0vh; margin-bottom: 20px; }
+    .welcome-to { color: #FF9933 !important; font-size: 1.1rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin-bottom: 10px; }
+    .login-logo { max-width: 220px; margin: 0 auto 20px auto; display: block; }
     
-    /* Gemini Dynamic Home Screen Typography */
+    .auth-header-professional { font-size: 2.2rem; font-weight: 700; color: inherit; text-align: center; margin-bottom: 5px; }
+    .auth-subtitle { opacity: 0.6; font-size: 1.05rem; text-align: center; margin-bottom: 30px; }
+    .divider { text-align: center; opacity: 0.4; margin: 20px 0; font-size: 0.85rem; font-weight: 600; }
+
+    /* Home Screen Typography */
     .gemini-greeting { 
         font-size: 3.5rem; font-weight: 500; 
-        background: -webkit-linear-gradient(45deg, #1A73E8, #E94235); 
+        background: -webkit-linear-gradient(74deg, #4285f4 0, #9b72cb 9%, #d96570 20%, #d96570 24%, #9b72cb 35%, #4285f4 44%, #9b72cb 50%, #d96570 56%, #131314 75%, #131314 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        margin-bottom: 0px; text-align: left;
+        margin-bottom: 5px; text-align: left; line-height: 1.2;
+    }
+    @media (prefers-color-scheme: dark) {
+        .gemini-greeting {
+            background: -webkit-linear-gradient(74deg, #8ab4f8 0, #c58af9 9%, #f28b82 20%, #f28b82 24%, #c58af9 35%, #8ab4f8 44%, #c58af9 50%, #f28b82 56%, #e8eaed 75%, #e8eaed 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
     }
     .gemini-greeting-sub { 
-        font-size: 3.5rem; color: rgba(128,128,128,0.8); font-weight: 400; 
-        margin-top: 0px; margin-bottom: 40px; text-align: left;
+        font-size: 3.5rem; opacity: 0.6; font-weight: 400; 
+        margin-top: 0px; margin-bottom: 50px; text-align: left; line-height: 1.2;
+    }
+
+    /* THE MASSIVE SEARCH PILL (PERMANENTLY FIXED - ONE BOX) */
+    /* Style the outer container to be the pill */
+    [data-testid="stForm"] { 
+        background-color: rgba(128, 128, 128, 0.08) !important; 
+        border-radius: 40px !important; 
+        padding: 5px 15px 5px 25px !important; 
+        border: 1px solid rgba(128, 128, 128, 0.2) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
     }
     
-    /* Full Width Chat Bubbles */
-    [data-testid="stChatMessage"] { 
-        background-color: rgba(128, 128, 128, 0.03) !important; 
-        border-radius: 8px; padding: 20px; 
-        border: 1px solid rgba(128, 128, 128, 0.15); margin-bottom: 16px; 
+    /* Aggressively NUKE every single internal Streamlit hidden background and border */
+    [data-testid="stForm"] > div,
+    [data-testid="stForm"] div[data-baseweb="input"],
+    [data-testid="stForm"] div[data-baseweb="base-input"],
+    [data-testid="stForm"] div[data-testid="stTextInput"] > div {
+        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* The Text Input itself */
+    [data-testid="stForm"] input {
+        background-color: transparent !important;
+        border: none !important;
+        font-size: 1.15rem !important;
+        padding: 15px 0px !important;
+        box-shadow: none !important;
+        color: inherit !important;
+    }
+    [data-testid="stForm"] input::placeholder { opacity: 0.5; font-weight: 400; }
+    [data-testid="stForm"] input:focus { border: none !important; box-shadow: none !important; background-color: transparent !important; }
+
+    /* The "Plan" Button inside the pill */
+    div[data-testid="stFormSubmitButton"] button {
+        background-color: transparent !important; color: #1A73E8 !important; border: none !important;
+        border-radius: 50px !important; font-weight: 600 !important; font-size: 1.1rem !important;
+        height: 100% !important; padding: 10px 20px !important; margin-top: 5px !important;
+    }
+    div[data-testid="stFormSubmitButton"] button:hover { background-color: rgba(128, 128, 128, 0.1) !important; }
+
+    /* --- SIDEBAR PREMIUM UPGRADE --- */
+    [data-testid="stSidebar"] {
+        background-color: rgba(128,128,128,0.02) !important;
+        border-right: 1px solid rgba(128,128,128,0.1) !important;
+    }
+    
+    /* Premium Profile Badge HTML Class */
+    .profile-badge {
+        display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+        background-color: rgba(128,128,128,0.05); border-radius: 12px;
+        margin-bottom: 25px; border: 1px solid rgba(128,128,128,0.15);
+    }
+    .profile-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: linear-gradient(135deg, #1A73E8, #9b72cb);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1.1rem;
+    }
+    
+    /* Sidebar Buttons styling */
+    [data-testid="stSidebar"] button[kind="secondary"] {
+        border: 1px solid rgba(128,128,128,0.2) !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+        font-weight: 500 !important;
+        padding: 10px !important;
+    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        border-color: #1A73E8 !important;
+        color: #1A73E8 !important;
+        background-color: rgba(26,115,232,0.05) !important;
+    }
+    
+    /* Sidebar Expander (Saved Trips) */
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        border: 1px solid rgba(128,128,128,0.15) !important;
+        border-radius: 10px !important;
+        background-color: rgba(128,128,128,0.03) !important;
+    }
+
+    /* --- LOGO THEME ADAPTATION --- */
+    [data-testid="stSidebar"] img, .login-logo, .home-logo {
+        transition: filter 0.3s ease;
+    }
+    /* When system is dark, invert the logo globally */
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stSidebar"] img, .login-logo, .home-logo {
+            filter: brightness(0) invert(1) !important; 
+        }
+    }
+    
+    /* Standardized borders for Login/Sign Up text inputs */
+    .login-btn-container [data-testid="stTextInput"] > div {
+        border-radius: 8px;
+        border: 1px solid rgba(128, 128, 128, 0.3);
+        background-color: rgba(128, 128, 128, 0.05);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. FIREBASE LOGIC ---
+# --- 5. FIREBASE LOGIC ---
 def sign_up(email, password):
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_API_KEY}"
     res = requests.post(url, json={"email": email, "password": password, "returnSecureToken": True})
@@ -104,7 +204,7 @@ def get_user_trips(user_id, token):
     res = requests.get(url)
     return res.json() if res.status_code == 200 and res.json() else {}
 
-# --- 5. ORIGINAL LOGIC HELPER FUNCTIONS ---
+# --- 6. ORIGINAL LOGIC HELPER FUNCTIONS ---
 def get_ai_icon(text):
     t = text.lower()
     if "itinerary" in t or "day 1" in t or "blueprint" in t: return ":material/description:" 
@@ -112,6 +212,13 @@ def get_ai_icon(text):
     if "budget" in t or "cost" in t or "inr" in t: return ":material/payments:" 
     if "welcome" in t or "hello" in t: return ":material/waving_hand:" 
     return ":material/support_agent:" 
+
+def extract_first_name(email):
+    raw_name = email.split('@')[0]
+    clean_name = re.sub(r'[\.\_\-]', ' ', raw_name) 
+    clean_name = re.sub(r'\d+', '', clean_name) 
+    first_name = clean_name.split()[0].capitalize() if clean_name.split() else "Explorer"
+    return first_name
 
 def get_live_flights(origin, dest, out_date, ret_date):
     if not SERPAPI_KEY or SERPAPI_KEY == "PASTE_SERP_KEY_HERE": 
@@ -143,7 +250,12 @@ def get_live_flights(origin, dest, out_date, ret_date):
         return ""
 
 def create_pdf(text_content):
-    pdf = FPDF()
+    class PDF(FPDF):
+        def header(self):
+            if os.path.exists(LOGO_FILE):
+                self.image(LOGO_FILE, x=35, y=120, w=140)
+                
+    pdf = PDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 22)
     pdf.set_text_color(11, 15, 25) 
@@ -168,7 +280,7 @@ def create_pdf(text_content):
             pdf.set_font("Arial", '', 11); pdf.multi_cell(0, 6, txt=line.replace('**', '').replace('*', '-'))
     return pdf.output(dest="S").encode("latin-1")
 
-# --- 6. SESSION STATE INITIALIZATION ---
+# --- 7. SESSION STATE INITIALIZATION ---
 if "user" not in st.session_state: st.session_state.user = None
 if "auth_mode" not in st.session_state: st.session_state.auth_mode = "login"
 if "messages" not in st.session_state: st.session_state.messages = []
@@ -222,7 +334,7 @@ if GEMINI_KEY and GEMINI_KEY != "PASTE_YOUR_GEMINI_KEY_HERE":
     except Exception:
         pass
 
-# --- 7. THE MASTER LOGIC ENGINE ---
+# --- 8. THE MASTER LOGIC ENGINE ---
 def run_architect_engine(prompt):
     if not chat_session:
         st.error("🚨 System Error: Gemini API Key is missing or invalid.")
@@ -238,17 +350,14 @@ def run_architect_engine(prompt):
                 live_flight_text = ""
                 show_pdf_button = False
                 
-                # Strip out any random System Tags (like [TRAIN_SEARCH...]) so they don't bleed into the UI
                 clean_text = re.sub(r'\[.*?_SEARCH:\s*[^\]]+\]', '', clean_text, flags=re.IGNORECASE).strip()
 
-                # Handle Flight Search specifically if it exists
                 flight_match = re.search(r'\[FLIGHT_SEARCH:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]', response.text, re.IGNORECASE)
                 if flight_match:
                     status.update(label="Searching live flight fares & timings...", state="running")
                     origin, dest, out_date, ret_date = flight_match.groups()
                     live_flight_text = get_live_flights(origin.strip(), dest.strip(), out_date.strip(), ret_date.strip())
 
-                # Unlock the final UI Tabs only when PDF_READY is triggered
                 if "[PDF_READY]" in clean_text:
                     show_pdf_button = True
                     st.session_state.itinerary_generated = True 
@@ -262,7 +371,6 @@ def run_architect_engine(prompt):
                 st.error(f"Error: {str(e)}")
                 st.stop()
         
-        # Original Streaming Logic
         def stream_data(text):
             for word in text.split(" "):
                 yield word + " "
@@ -280,22 +388,29 @@ def run_architect_engine(prompt):
         st.rerun()
 
 
-# --- 8. MAIN APPLICATION ROUTING ---
+# --- 9. MAIN APPLICATION ROUTING ---
 
-# ROUTE A: LOGIN SCREEN
 if not st.session_state.user:
-    st.markdown("<div class='brand-container'><p class='welcome-to'>welcome to</p><h1 class='genyatra-title'>GenYatra</h1></div>", unsafe_allow_html=True)
+    st.write("<br>", unsafe_allow_html=True)
     _, col_center, _ = st.columns([1, 1.2, 1]) 
     
     with col_center:
-        st.markdown("<div class='login-btn-container'>", unsafe_allow_html=True)
+        st.markdown("<div class='login-btn-container anim-1'>", unsafe_allow_html=True)
+        
+        st.markdown("<div class='brand-container'><p class='welcome-to'>welcome to</p></div>", unsafe_allow_html=True)
+        if encoded_logo:
+            st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' alt='GenYatra Logo' class='login-logo'>", unsafe_allow_html=True)
+        else:
+            st.markdown("<h1 style='text-align: center; color: #1A73E8;'>GenYatra</h1>", unsafe_allow_html=True)
+            
         if st.session_state.auth_mode == "login":
-            st.markdown("<div class='auth-header'>Welcome Back</div>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-header-professional'>Welcome Back</div>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-subtitle'>Log in to your dashboard to continue.</div>", unsafe_allow_html=True)
             with st.container():
-                email = st.text_input("Email")
-                password = st.text_input("Password", type="password")
+                email = st.text_input("Email", key="login_email")
+                password = st.text_input("Password", type="password", key="login_pass")
                 st.write("")
-                if st.button("Sign In", type="primary", use_container_width=True):
+                if st.button("Login", type="primary", use_container_width=True):
                     if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY" or not FIREBASE_API_KEY:
                         st.error("Missing Firebase Key in code.")
                     else:
@@ -309,13 +424,14 @@ if not st.session_state.user:
                 st.session_state.auth_mode = "signup"
                 st.rerun()
             if st.button("Continue as Guest", use_container_width=True):
-                st.session_state.user = {"email": "Guest Explorer", "is_guest": True}
+                st.session_state.user = {"email": "Explorer Explorer", "is_guest": True}
                 st.rerun()
         else:
-            st.markdown("<div class='auth-header'>Create your Account</div>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-header-professional'>Create Account</div>", unsafe_allow_html=True)
+            st.markdown("<div class='auth-subtitle'>Join GenYatra to save your custom itineraries.</div>", unsafe_allow_html=True)
             with st.container():
-                email = st.text_input("Email")
-                password = st.text_input("Password", type="password")
+                email = st.text_input("Email", key="signup_email")
+                password = st.text_input("Password", type="password", key="signup_pass")
                 st.write("")
                 if st.button("Sign Up", type="primary", use_container_width=True):
                     if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY" or not FIREBASE_API_KEY:
@@ -329,31 +445,45 @@ if not st.session_state.user:
                             st.session_state.auth_mode = "login"
                             st.rerun()
             st.markdown("<div class='divider'>OR</div>", unsafe_allow_html=True)
-            if st.button("Already have an account? Log In", use_container_width=True):
+            if st.button("Already have an account? Login", use_container_width=True):
                 st.session_state.auth_mode = "login"
                 st.rerun()
             if st.button("Continue as Guest", use_container_width=True):
-                st.session_state.user = {"email": "Guest Explorer", "is_guest": True}
+                st.session_state.user = {"email": "Explorer Explorer", "is_guest": True}
                 st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# ROUTE B: SECURE DASHBOARD
 else:
-    # Sidebar
     with st.sidebar:
-        st.markdown("<h2 style='font-weight: 900; letter-spacing: -1px; margin-bottom: 0px;'>GenYatra</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #FF9933; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-top: 0px; margin-bottom: 30px;'>AI Architect</p>", unsafe_allow_html=True)
+        # Sidebar Logo
+        if encoded_logo:
+             st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' style='max-width: 150px; margin-bottom: 25px; display: block;'>", unsafe_allow_html=True)
+        else:
+            st.markdown("<h2 style='font-weight: 900; margin-bottom: 25px;'>GenYatra</h2>", unsafe_allow_html=True)
+            
+        # Custom Premium Profile Badge HTML
+        display_name = "Explorer" if st.session_state.user.get("is_guest") else extract_first_name(st.session_state.user['email'])
+        initial = display_name[0].upper() if display_name else "E"
         
-        display_name = st.session_state.user['email'].split('@')[0].capitalize() if not st.session_state.user.get("is_guest") else "Guest"
-        st.caption(f"Profile: {display_name}")
+        st.markdown(f"""
+            <div class="profile-badge">
+                <div class="profile-avatar">{initial}</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.95rem;">{display_name}</div>
+                    <div style="font-size: 0.75rem; opacity: 0.7;">GenYatra Member</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
         
-        if st.button("Start New Trip", use_container_width=True):
+        st.write("") # spacing
+        
+        if st.button("➕ Start New Trip", use_container_width=True):
             st.session_state.messages = []
             st.session_state.pending_prompt = None
             st.session_state.itinerary_generated = False
             st.rerun()
             
-        if st.button("Logout", use_container_width=True):
+        if st.button("🔓 Logout", use_container_width=True):
             st.session_state.user = None
             st.session_state.messages = []
             st.session_state.pending_prompt = None
@@ -361,61 +491,66 @@ else:
             st.session_state.auth_mode = "login"
             st.rerun()
             
-        st.divider()
-        st.subheader("Saved Trips")
+        st.markdown("<br><hr style='opacity: 0.2;'><br>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight: 600; margin-bottom: 10px;'>Saved Trips</div>", unsafe_allow_html=True)
+        
         if st.session_state.user.get("is_guest"):
             st.caption("Guest Mode: History disabled.")
         else:
             history = get_user_trips(st.session_state.user["localId"], st.session_state.user["idToken"])
             if history:
                 for trip_id, trip_data in history.items():
-                    with st.expander(trip_data.get("destination", "Trip")):
+                    with st.expander(f"📍 {trip_data.get('destination', 'Trip')}"):
                         st.write(trip_data.get("itinerary", "")[:100] + "...")
             else:
                 st.caption("No trips saved yet.")
 
-
-    # --- FULL SCREEN DYNAMIC LAYOUT ---
-    
-    # Use a single, wide column for the main interface
     _, main_ui_col, _ = st.columns([0.5, 3.0, 0.5])
     
     with main_ui_col:
         
-        # STATE 1: GEMINI HOME SCREEN (No messages yet)
         if not st.session_state.messages and not st.session_state.pending_prompt:
             st.write("<br><br><br><br>", unsafe_allow_html=True)
-            user_name = st.session_state.user['email'].split('@')[0].capitalize() if not st.session_state.user.get("is_guest") else "Explorer"
-            st.markdown(f"<div class='gemini-greeting'>Hi {user_name}</div>", unsafe_allow_html=True)
-            st.markdown("<div class='gemini-greeting-sub'>Where should we start?</div>", unsafe_allow_html=True)
             
+            clean_first_name = "Explorer" if st.session_state.user.get("is_guest") else extract_first_name(st.session_state.user['email'])
+            
+            st.markdown(f"<div class='gemini-greeting anim-1'>Hi, {clean_first_name}!!</div>", unsafe_allow_html=True)
+            st.markdown("<div class='gemini-greeting-sub anim-2'>I'm ready to help you plan, explore, and travel.</div>", unsafe_allow_html=True)
+            
+            st.markdown("<div class='anim-3'>", unsafe_allow_html=True)
             with st.form("initial_search", clear_on_submit=True, border=False):
                 search_col, btn_col = st.columns([6, 1])
                 with search_col:
                     first_input = st.text_input("Search", placeholder="Ask GenYatra to plan your trip...", label_visibility="collapsed")
                 with btn_col:
-                    submit_search = st.form_submit_button("Plan", use_container_width=True)
+                    submit_search = st.form_submit_button("Plan")
                 
                 if submit_search and first_input:
                     st.session_state.messages.append({"role": "user", "content": first_input, "icon": ":material/person:"})
                     st.session_state.pending_prompt = first_input
                     st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        # STATE 2 & 3: CHAT & INTERVIEW MODE (Full Screen)
         else:
-            # 1. Render all history
             for msg in st.session_state.messages:
-                icon = msg.get("icon", ":material/person:") if msg["role"] == "assistant" else ":material/person:"
-                with st.chat_message(msg["role"], avatar=icon):
-                    st.markdown(msg["content"])
+                if msg["role"] == "user":
+                    st.markdown(f"""
+                        <div style='display: flex; justify-content: flex-end; margin-bottom: 20px;'>
+                            <div style='max-width: 80%; padding: 12px 18px; border-radius: 12px; background-color: rgba(128,128,128,0.1); color: inherit; font-size: 1rem;'>
+                                {msg["content"]}
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    col_icon, col_txt = st.columns([1, 15])
+                    with col_icon: st.write(msg.get("icon", ":material/psychology:"))
+                    with col_txt: st.markdown(msg["content"])
             
-            # 2. Process Home Screen Handoff 
             if st.session_state.pending_prompt:
                 prompt_to_run = st.session_state.pending_prompt
                 st.session_state.pending_prompt = None 
                 run_architect_engine(prompt_to_run)
             
-            # 3. Render Tabs at the bottom ONLY if generated
             if st.session_state.itinerary_generated and hasattr(st.session_state, 'last_generated_itinerary'):
                 st.markdown("---")
                 st.subheader("Your Master Itinerary")
@@ -435,10 +570,14 @@ else:
                             first_prompt = st.session_state.messages[0]["content"] if st.session_state.messages else "New Trip"
                             save_trip_to_db(st.session_state.user["localId"], st.session_state.user["idToken"], first_prompt[:30] + "...", st.session_state.last_generated_itinerary)
             
-            # 4. Chat Box (Always visible at the bottom)
             user_input = st.chat_input("Reply to the architect...")
             if user_input:
                 st.session_state.messages.append({"role": "user", "content": user_input, "icon": ":material/person:"})
-                with st.chat_message("user", avatar=":material/person:"):
-                    st.markdown(user_input)
+                st.markdown(f"""
+                        <div style='display: flex; justify-content: flex-end; margin-bottom: 20px;'>
+                            <div style='max-width: 80%; padding: 12px 18px; border-radius: 12px; background-color: rgba(128,128,128,0.1); color: inherit; font-size: 1rem;'>
+                                {user_input}
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                 run_architect_engine(user_input)
