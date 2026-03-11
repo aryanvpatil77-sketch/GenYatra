@@ -27,20 +27,22 @@ GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", ""))
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
-# --- 4. PREMIUM THEME-AGNOSTIC CSS (Aggressive Form & Sidebar Fixes) ---
+# --- 4. PREMIUM THEME-AGNOSTIC CSS (Alignment & Sidebar Toggle Fixes) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
     
     * { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important; }
 
-    #MainMenu, footer, header, [data-testid="stDecoration"] { display: none !important; }
+    /* Hide Clutter but KEEP the header transparent so the Sidebar Toggle remains visible! */
+    #MainMenu, footer, [data-testid="stDecoration"] { display: none !important; }
+    header { background: transparent !important; box-shadow: none !important; }
     
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
     }
     
-    .block-container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; }
     [data-testid="InputInstructions"] { display: none !important; }
     
     /* Animations */
@@ -79,8 +81,7 @@ st.markdown("""
         margin-top: 0px; margin-bottom: 50px; text-align: left; line-height: 1.2;
     }
 
-    /* THE MASSIVE SEARCH PILL (PERMANENTLY FIXED - ONE BOX) */
-    /* Style the outer container to be the pill */
+    /* --- THE MASSIVE SEARCH PILL --- */
     [data-testid="stForm"] { 
         background-color: rgba(128, 128, 128, 0.08) !important; 
         border-radius: 40px !important; 
@@ -89,7 +90,6 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
     }
     
-    /* Aggressively NUKE every single internal Streamlit hidden background and border */
     [data-testid="stForm"] > div,
     [data-testid="stForm"] div[data-baseweb="input"],
     [data-testid="stForm"] div[data-baseweb="base-input"],
@@ -100,23 +100,37 @@ st.markdown("""
         box-shadow: none !important;
     }
     
+    /* ALIGNMENT FIX: Nuke the invisible ghost label that shifts text down */
+    [data-testid="stForm"] label { display: none !important; }
+    
     /* The Text Input itself */
     [data-testid="stForm"] input {
         background-color: transparent !important;
         border: none !important;
         font-size: 1.15rem !important;
-        padding: 15px 0px !important;
+        padding: 12px 0px !important; /* Matched perfectly with button */
+        margin: 0px !important;
         box-shadow: none !important;
         color: inherit !important;
     }
     [data-testid="stForm"] input::placeholder { opacity: 0.5; font-weight: 400; }
     [data-testid="stForm"] input:focus { border: none !important; box-shadow: none !important; background-color: transparent !important; }
 
-    /* The "Plan" Button inside the pill */
+    /* The "Plan" Button Container & Button */
+    div[data-testid="stFormSubmitButton"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        margin: 0px !important;
+        padding: 0px !important;
+    }
     div[data-testid="stFormSubmitButton"] button {
         background-color: transparent !important; color: #1A73E8 !important; border: none !important;
         border-radius: 50px !important; font-weight: 600 !important; font-size: 1.1rem !important;
-        height: 100% !important; padding: 10px 20px !important; margin-top: 5px !important;
+        margin: 0px !important; 
+        padding: 12px 20px !important; /* Matched perfectly with input */
+        align-self: center;
     }
     div[data-testid="stFormSubmitButton"] button:hover { background-color: rgba(128, 128, 128, 0.1) !important; }
 
@@ -126,7 +140,6 @@ st.markdown("""
         border-right: 1px solid rgba(128,128,128,0.1) !important;
     }
     
-    /* Premium Profile Badge HTML Class */
     .profile-badge {
         display: flex; align-items: center; gap: 12px; padding: 12px 15px;
         background-color: rgba(128,128,128,0.05); border-radius: 12px;
@@ -139,7 +152,6 @@ st.markdown("""
         font-weight: 700; font-size: 1.1rem;
     }
     
-    /* Sidebar Buttons styling */
     [data-testid="stSidebar"] button[kind="secondary"] {
         border: 1px solid rgba(128,128,128,0.2) !important;
         border-radius: 10px !important;
@@ -153,7 +165,6 @@ st.markdown("""
         background-color: rgba(26,115,232,0.05) !important;
     }
     
-    /* Sidebar Expander (Saved Trips) */
     [data-testid="stSidebar"] [data-testid="stExpander"] {
         border: 1px solid rgba(128,128,128,0.15) !important;
         border-radius: 10px !important;
@@ -164,14 +175,12 @@ st.markdown("""
     [data-testid="stSidebar"] img, .login-logo, .home-logo {
         transition: filter 0.3s ease;
     }
-    /* When system is dark, invert the logo globally */
     @media (prefers-color-scheme: dark) {
         [data-testid="stSidebar"] img, .login-logo, .home-logo {
             filter: brightness(0) invert(1) !important; 
         }
     }
     
-    /* Standardized borders for Login/Sign Up text inputs */
     .login-btn-container [data-testid="stTextInput"] > div {
         border-radius: 8px;
         border: 1px solid rgba(128, 128, 128, 0.3);
