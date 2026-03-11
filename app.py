@@ -27,14 +27,19 @@ GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", ""))
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
-# --- 4. PREMIUM THEME-AGNOSTIC CSS (Alignment & Sidebar Toggle Fixes) ---
+# --- 4. PREMIUM THEME-AGNOSTIC CSS (Toggle Fix & Gemini Input Bar) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
     
-    * { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+    /* FIXED TOGGLE: Apply Google Sans to elements, but protect Material Icons! */
+    p, h1, h2, h3, h4, h5, h6, input, button, textarea, div { 
+        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+    }
+    span[class*="material-symbols"], i[class*="icon"] {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+    }
 
-    /* Hide Clutter but KEEP the header transparent so the Sidebar Toggle remains visible! */
     #MainMenu, footer, [data-testid="stDecoration"] { display: none !important; }
     header { background: transparent !important; box-shadow: none !important; }
     
@@ -81,58 +86,80 @@ st.markdown("""
         margin-top: 0px; margin-bottom: 50px; text-align: left; line-height: 1.2;
     }
 
-    /* --- THE MASSIVE SEARCH PILL --- */
+    /* --- THE GEMINI INPUT BAR CLONE (State 1) --- */
     [data-testid="stForm"] { 
         background-color: rgba(128, 128, 128, 0.08) !important; 
         border-radius: 40px !important; 
-        padding: 5px 15px 5px 25px !important; 
+        padding: 5px 10px 5px 25px !important; 
         border: 1px solid rgba(128, 128, 128, 0.2) !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
     }
     
-    [data-testid="stForm"] > div,
-    [data-testid="stForm"] div[data-baseweb="input"],
-    [data-testid="stForm"] div[data-baseweb="base-input"],
-    [data-testid="stForm"] div[data-testid="stTextInput"] > div {
-        background-color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+    [data-testid="stForm"] > div, [data-testid="stForm"] div[data-baseweb="input"],
+    [data-testid="stForm"] div[data-baseweb="base-input"], [data-testid="stForm"] div[data-testid="stTextInput"] > div {
+        background-color: transparent !important; background: transparent !important; border: none !important; box-shadow: none !important;
     }
     
-    /* ALIGNMENT FIX: Nuke the invisible ghost label that shifts text down */
     [data-testid="stForm"] label { display: none !important; }
     
-    /* The Text Input itself */
     [data-testid="stForm"] input {
-        background-color: transparent !important;
-        border: none !important;
-        font-size: 1.15rem !important;
-        padding: 12px 0px !important; /* Matched perfectly with button */
-        margin: 0px !important;
-        box-shadow: none !important;
-        color: inherit !important;
+        background-color: transparent !important; border: none !important;
+        font-size: 1.15rem !important; padding: 12px 0px !important; margin: 0px !important;
+        box-shadow: none !important; color: inherit !important;
     }
     [data-testid="stForm"] input::placeholder { opacity: 0.5; font-weight: 400; }
     [data-testid="stForm"] input:focus { border: none !important; box-shadow: none !important; background-color: transparent !important; }
 
-    /* The "Plan" Button Container & Button */
     div[data-testid="stFormSubmitButton"] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        margin: 0px !important;
-        padding: 0px !important;
+        display: flex; align-items: center; justify-content: center; height: 100%; margin: 0px !important; padding: 0px !important;
     }
+    
+    /* The Circular Gemini Send Arrow */
     div[data-testid="stFormSubmitButton"] button {
-        background-color: transparent !important; color: #1A73E8 !important; border: none !important;
-        border-radius: 50px !important; font-weight: 600 !important; font-size: 1.1rem !important;
-        margin: 0px !important; 
-        padding: 12px 20px !important; /* Matched perfectly with input */
-        align-self: center;
+        background-color: #131314 !important; 
+        color: #FFFFFF !important; 
+        border: none !important;
+        border-radius: 50% !important; 
+        font-weight: 800 !important; 
+        font-size: 1.3rem !important;
+        width: 46px !important; 
+        height: 46px !important; 
+        min-height: 46px !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+        padding: 0px !important; margin-top: 1px !important;
+        transition: transform 0.2s;
     }
-    div[data-testid="stFormSubmitButton"] button:hover { background-color: rgba(128, 128, 128, 0.1) !important; }
+    div[data-testid="stFormSubmitButton"] button:hover { transform: scale(1.05); }
+    
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stFormSubmitButton"] button {
+            background-color: #FFFFFF !important; 
+            color: #131314 !important;
+        }
+    }
+
+    /* --- THE CHAT INPUT CLONE (States 2 & 3) --- */
+    [data-testid="stChatInput"] {
+        background-color: rgba(128, 128, 128, 0.08) !important;
+        border-radius: 40px !important;
+        border: 1px solid rgba(128, 128, 128, 0.2) !important;
+        padding-right: 6px !important;
+    }
+    [data-testid="stChatInputSubmitButton"] {
+        background-color: #131314 !important;
+        border-radius: 50% !important;
+        height: 38px !important;
+        width: 38px !important;
+        margin-top: 5px !important;
+    }
+    [data-testid="stChatInputSubmitButton"] svg { fill: white !important; }
+    
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stChatInputSubmitButton"] {
+            background-color: #FFFFFF !important;
+        }
+        [data-testid="stChatInputSubmitButton"] svg { fill: #131314 !important; }
+    }
 
     /* --- SIDEBAR PREMIUM UPGRADE --- */
     [data-testid="stSidebar"] {
@@ -532,7 +559,8 @@ else:
                 with search_col:
                     first_input = st.text_input("Search", placeholder="Ask GenYatra to plan your trip...", label_visibility="collapsed")
                 with btn_col:
-                    submit_search = st.form_submit_button("Plan")
+                    # Up Arrow replaces "Plan" to replicate the Gemini circular send button
+                    submit_search = st.form_submit_button("↑")
                 
                 if submit_search and first_input:
                     st.session_state.messages.append({"role": "user", "content": first_input, "icon": ":material/person:"})
