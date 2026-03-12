@@ -27,21 +27,19 @@ GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", ""))
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
-# --- 4. PREMIUM THEME-AGNOSTIC CSS (Toggle Fix & Gemini Input Bar) ---
+# --- 4. PREMIUM THEME-AGNOSTIC CSS & ALIGNMENT FIXES ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
     
-    /* FIXED TOGGLE: Apply Google Sans to elements, but protect Material Icons! */
-    p, h1, h2, h3, h4, h5, h6, input, button, textarea, div { 
-        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
-    }
-    span[class*="material-symbols"], i[class*="icon"] {
-        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
-    }
+    * { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important; }
 
     #MainMenu, footer, [data-testid="stDecoration"] { display: none !important; }
     header { background: transparent !important; box-shadow: none !important; }
+    
+    /* FIX 2: FORCE SIDEBAR TOGGLE ARROW VISIBILITY */
+    [data-testid="collapsedControl"] { display: flex !important; opacity: 1 !important; z-index: 99999 !important; }
+    [data-testid="collapsedControl"] svg { fill: #5F6368 !important; }
     
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
@@ -59,13 +57,10 @@ st.markdown("""
     .anim-2 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
     .anim-3 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
 
-    /* Login Page Styling */
-    .brand-container { text-align: center; margin-top: 0vh; margin-bottom: 20px; }
-    .welcome-to { color: #FF9933 !important; font-size: 1.1rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin-bottom: 10px; }
-    .login-logo { max-width: 220px; margin: 0 auto 20px auto; display: block; }
-    
-    .auth-header-professional { font-size: 2.2rem; font-weight: 700; color: inherit; text-align: center; margin-bottom: 5px; }
-    .auth-subtitle { opacity: 0.6; font-size: 1.05rem; text-align: center; margin-bottom: 30px; }
+    /* Login Page Styling Fixes */
+    .brand-container { text-align: center; margin-top: 5vh; margin-bottom: 10px; }
+    .welcome-to { color: #FF9933 !important; font-size: 1.3rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin-bottom: 15px; }
+    .login-logo { max-width: 250px; margin: 0 auto 30px auto; display: block; }
     .divider { text-align: center; opacity: 0.4; margin: 20px 0; font-size: 0.85rem; font-weight: 600; }
 
     /* Home Screen Typography */
@@ -75,143 +70,133 @@ st.markdown("""
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
         margin-bottom: 5px; text-align: left; line-height: 1.2;
     }
-    @media (prefers-color-scheme: dark) {
-        .gemini-greeting {
-            background: -webkit-linear-gradient(74deg, #8ab4f8 0, #c58af9 9%, #f28b82 20%, #f28b82 24%, #c58af9 35%, #8ab4f8 44%, #c58af9 50%, #f28b82 56%, #e8eaed 75%, #e8eaed 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
-    }
+    
     .gemini-greeting-sub { 
-        font-size: 3.5rem; opacity: 0.6; font-weight: 400; 
-        margin-top: 0px; margin-bottom: 50px; text-align: left; line-height: 1.2;
+        font-size: 2rem; opacity: 0.6; font-weight: 400; 
+        margin-top: 0px; margin-bottom: 40px; text-align: left; line-height: 1.2;
     }
 
-    /* --- THE GEMINI INPUT BAR CLONE (State 1) --- */
+    /* --- FIX 1: THE SEARCH PILL (Perfect Right Alignment & Mobile Wrap Fix) --- */
     [data-testid="stForm"] { 
         background-color: rgba(128, 128, 128, 0.08) !important; 
         border-radius: 40px !important; 
-        padding: 5px 10px 5px 25px !important; 
+        padding: 6px 8px 6px 24px !important; /* Ultra-tight right padding to flush the button */
         border: 1px solid rgba(128, 128, 128, 0.2) !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
     }
     
-    [data-testid="stForm"] > div, [data-testid="stForm"] div[data-baseweb="input"],
-    [data-testid="stForm"] div[data-baseweb="base-input"], [data-testid="stForm"] div[data-testid="stTextInput"] > div {
+    /* Remove internal Streamlit gap spacings */
+    [data-testid="stForm"] [data-testid="stHorizontalBlock"] { gap: 0px !important; align-items: center !important; }
+    [data-testid="stForm"] [data-testid="column"]:first-child { width: 100% !important; flex: 1 1 auto !important; }
+    [data-testid="stForm"] [data-testid="column"]:last-child { width: auto !important; flex: 0 0 auto !important; }
+    
+    [data-testid="stForm"] > div,
+    [data-testid="stForm"] div[data-baseweb="input"],
+    [data-testid="stForm"] div[data-baseweb="base-input"],
+    [data-testid="stForm"] div[data-testid="stTextInput"] > div {
         background-color: transparent !important; background: transparent !important; border: none !important; box-shadow: none !important;
     }
-    
     [data-testid="stForm"] label { display: none !important; }
-    
     [data-testid="stForm"] input {
-        background-color: transparent !important; border: none !important;
-        font-size: 1.15rem !important; padding: 12px 0px !important; margin: 0px !important;
-        box-shadow: none !important; color: inherit !important;
+        background-color: transparent !important; border: none !important; font-size: 1.15rem !important;
+        padding: 10px 0px !important; margin: 0px !important; box-shadow: none !important; color: inherit !important;
     }
     [data-testid="stForm"] input::placeholder { opacity: 0.5; font-weight: 400; }
     [data-testid="stForm"] input:focus { border: none !important; box-shadow: none !important; background-color: transparent !important; }
 
     div[data-testid="stFormSubmitButton"] {
-        display: flex; align-items: center; justify-content: center; height: 100%; margin: 0px !important; padding: 0px !important;
+        display: flex; align-items: center; justify-content: flex-end; 
+        height: 100%; margin: 0px !important; padding: 0px !important;
     }
     
-    /* The Circular Gemini Send Arrow */
+    /* The Solid Circular Send Button with Up Arrow */
     div[data-testid="stFormSubmitButton"] button {
-        background-color: #131314 !important; 
-        color: #FFFFFF !important; 
-        border: none !important;
-        border-radius: 50% !important; 
-        font-weight: 800 !important; 
-        font-size: 1.3rem !important;
-        width: 46px !important; 
-        height: 46px !important; 
-        min-height: 46px !important;
+        background-color: #131314 !important; color: #FFFFFF !important; 
+        border: none !important; border-radius: 50% !important; 
+        font-weight: 800 !important; font-size: 1.4rem !important;
+        width: 44px !important; height: 44px !important; min-height: 44px !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
-        padding: 0px !important; margin-top: 1px !important;
-        transition: transform 0.2s;
+        padding: 0px !important; margin: 0px !important; transition: transform 0.2s;
     }
     div[data-testid="stFormSubmitButton"] button:hover { transform: scale(1.05); }
-    
-    @media (prefers-color-scheme: dark) {
-        div[data-testid="stFormSubmitButton"] button {
-            background-color: #FFFFFF !important; 
-            color: #131314 !important;
-        }
-    }
 
-    /* --- THE CHAT INPUT CLONE (States 2 & 3) --- */
+    /* Same alignment fix applied to standard chat input box */
     [data-testid="stChatInput"] {
         background-color: rgba(128, 128, 128, 0.08) !important;
         border-radius: 40px !important;
         border: 1px solid rgba(128, 128, 128, 0.2) !important;
-        padding-right: 6px !important;
+        padding: 6px 8px 6px 24px !important; /* Matches main form pill */
     }
     [data-testid="stChatInputSubmitButton"] {
-        background-color: #131314 !important;
-        border-radius: 50% !important;
-        height: 38px !important;
-        width: 38px !important;
-        margin-top: 5px !important;
+        margin: 0 !important; padding: 0 !important; right: 8px !important;
+        position: absolute !important; top: 50% !important; transform: translateY(-50%) !important;
+        background-color: #131314 !important; border-radius: 50% !important;
+        height: 40px !important; width: 40px !important;
     }
     [data-testid="stChatInputSubmitButton"] svg { fill: white !important; }
-    
-    @media (prefers-color-scheme: dark) {
-        [data-testid="stChatInputSubmitButton"] {
-            background-color: #FFFFFF !important;
-        }
-        [data-testid="stChatInputSubmitButton"] svg { fill: #131314 !important; }
-    }
 
-    /* --- SIDEBAR PREMIUM UPGRADE --- */
+    /* --- FIX 3: SIDEBAR PREMIUM UPGRADE (Search Bar & Bottom Profile) --- */
     [data-testid="stSidebar"] {
         background-color: rgba(128,128,128,0.02) !important;
         border-right: 1px solid rgba(128,128,128,0.1) !important;
     }
     
-    .profile-badge {
-        display: flex; align-items: center; gap: 12px; padding: 12px 15px;
-        background-color: rgba(128,128,128,0.05); border-radius: 12px;
-        margin-bottom: 25px; border: 1px solid rgba(128,128,128,0.15);
+    /* Flexbox trick to force profile to bottom */
+    [data-testid="stSidebar"] > div:first-child > div:nth-child(2) > div {
+        display: flex; flex-direction: column; height: 100%;
     }
-    .profile-avatar {
-        width: 38px; height: 38px; border-radius: 50%;
-        background: linear-gradient(135deg, #1A73E8, #9b72cb);
-        color: white; display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 1.1rem;
+    [data-testid="stSidebar"] [data-testid="stPopover"] { margin-top: auto !important; margin-bottom: 20px !important; }
+    
+    /* Sidebar Search Box Customization */
+    [data-testid="stSidebar"] [data-testid="stTextInput"] input {
+        background-color: rgba(128, 128, 128, 0.08) !important;
+        border: 1px solid rgba(128, 128, 128, 0.1) !important;
+        border-radius: 12px !important;
+        padding: 12px 15px !important;
+        font-size: 0.95rem !important;
     }
     
-    [data-testid="stSidebar"] button[kind="secondary"] {
-        border: 1px solid rgba(128,128,128,0.2) !important;
-        border-radius: 10px !important;
-        transition: all 0.2s ease !important;
-        font-weight: 500 !important;
-        padding: 10px !important;
+    /* Sidebar Buttons (Seamless, text-only style) */
+    [data-testid="stSidebar"] button[kind="secondary"], [data-testid="stPopover"] > button {
+        border: none !important; background-color: transparent !important; border-radius: 8px !important;
+        transition: background-color 0.2s ease !important; font-weight: 500 !important; font-size: 1rem !important;
+        padding: 10px 12px !important; justify-content: flex-start !important; color: inherit !important; box-shadow: none !important;
     }
-    [data-testid="stSidebar"] button[kind="secondary"]:hover {
-        border-color: #1A73E8 !important;
-        color: #1A73E8 !important;
-        background-color: rgba(26,115,232,0.05) !important;
+    [data-testid="stSidebar"] button[kind="secondary"]:hover, [data-testid="stPopover"] > button:hover {
+        background-color: rgba(128,128,128,0.08) !important;
     }
     
-    [data-testid="stSidebar"] [data-testid="stExpander"] {
-        border: 1px solid rgba(128,128,128,0.15) !important;
-        border-radius: 10px !important;
-        background-color: rgba(128,128,128,0.03) !important;
+    /* Saved Trips Expanders */
+    [data-testid="stSidebar"] [data-testid="stExpander"] { border: none !important; background-color: transparent !important; box-shadow: none !important; }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary { padding: 8px 12px !important; border-radius: 8px; }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover { background-color: rgba(128,128,128,0.08) !important; }
+
+    /* --- MOBILE RESPONSIVENESS FIXES --- */
+    @media (max-width: 768px) {
+        .gemini-greeting { font-size: 2.2rem !important; }
+        .gemini-greeting-sub { font-size: 1.4rem !important; margin-bottom: 25px !important; }
+        .login-logo { max-width: 180px !important; }
+        .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+        [data-testid="stForm"] [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; }
     }
 
-    /* --- LOGO THEME ADAPTATION --- */
-    [data-testid="stSidebar"] img, .login-logo, .home-logo {
-        transition: filter 0.3s ease;
-    }
+    /* THEME ADAPTATION FOR DARK MODE */
+    [data-testid="stSidebar"] img, .login-logo, .home-logo { transition: filter 0.3s ease; }
     @media (prefers-color-scheme: dark) {
-        [data-testid="stSidebar"] img, .login-logo, .home-logo {
-            filter: brightness(0) invert(1) !important; 
+        [data-testid="stSidebar"] img, .login-logo, .home-logo { filter: brightness(0) invert(1) !important; }
+        [data-testid="collapsedControl"] svg { fill: #E8EAED !important; }
+        .gemini-greeting {
+            background: -webkit-linear-gradient(74deg, #8ab4f8 0, #c58af9 9%, #f28b82 20%, #f28b82 24%, #c58af9 35%, #8ab4f8 44%, #c58af9 50%, #f28b82 56%, #e8eaed 75%, #e8eaed 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
         }
+        div[data-testid="stFormSubmitButton"] button, [data-testid="stChatInputSubmitButton"] {
+            background-color: #FFFFFF !important; color: #131314 !important;
+        }
+        [data-testid="stChatInputSubmitButton"] svg { fill: #131314 !important; }
     }
     
     .login-btn-container [data-testid="stTextInput"] > div {
-        border-radius: 8px;
-        border: 1px solid rgba(128, 128, 128, 0.3);
-        background-color: rgba(128, 128, 128, 0.05);
+        border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.3); background-color: rgba(128, 128, 128, 0.05);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -437,11 +422,9 @@ if not st.session_state.user:
         if encoded_logo:
             st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' alt='GenYatra Logo' class='login-logo'>", unsafe_allow_html=True)
         else:
-            st.markdown("<h1 style='text-align: center; color: #1A73E8;'>GenYatra</h1>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align: center; color: #1A73E8; margin-bottom: 40px;'>GenYatra</h1>", unsafe_allow_html=True)
             
         if st.session_state.auth_mode == "login":
-            st.markdown("<div class='auth-header-professional'>Welcome Back</div>", unsafe_allow_html=True)
-            st.markdown("<div class='auth-subtitle'>Log in to your dashboard to continue.</div>", unsafe_allow_html=True)
             with st.container():
                 email = st.text_input("Email", key="login_email")
                 password = st.text_input("Password", type="password", key="login_pass")
@@ -463,8 +446,6 @@ if not st.session_state.user:
                 st.session_state.user = {"email": "Explorer Explorer", "is_guest": True}
                 st.rerun()
         else:
-            st.markdown("<div class='auth-header-professional'>Create Account</div>", unsafe_allow_html=True)
-            st.markdown("<div class='auth-subtitle'>Join GenYatra to save your custom itineraries.</div>", unsafe_allow_html=True)
             with st.container():
                 email = st.text_input("Email", key="signup_email")
                 password = st.text_input("Password", type="password", key="signup_pass")
@@ -476,9 +457,8 @@ if not st.session_state.user:
                         res = sign_up(email, password)
                         if "error" in res: st.error(res["error"]["message"])
                         else: 
-                            st.success("Account created! Logging you in...")
-                            time.sleep(1)
-                            st.session_state.auth_mode = "login"
+                            # User is automatically logged in upon successful account creation
+                            st.session_state.user = {"email": email, "idToken": res["idToken"], "localId": res["localId"], "is_guest": False}
                             st.rerun()
             st.markdown("<div class='divider'>OR</div>", unsafe_allow_html=True)
             if st.button("Already have an account? Login", use_container_width=True):
@@ -491,56 +471,52 @@ if not st.session_state.user:
 
 else:
     with st.sidebar:
-        # Sidebar Logo
+        # 1. Logo at absolute Top Left
         if encoded_logo:
-             st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' style='max-width: 150px; margin-bottom: 25px; display: block;'>", unsafe_allow_html=True)
+             st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' style='max-width: 120px; margin-bottom: 20px; display: block;'>", unsafe_allow_html=True)
         else:
-            st.markdown("<h2 style='font-weight: 900; margin-bottom: 25px;'>GenYatra</h2>", unsafe_allow_html=True)
-            
-        # Custom Premium Profile Badge HTML
-        display_name = "Explorer" if st.session_state.user.get("is_guest") else extract_first_name(st.session_state.user['email'])
-        initial = display_name[0].upper() if display_name else "E"
+            st.markdown("<h3 style='font-weight: 900; margin-top: 0px; margin-bottom: 20px;'>GenYatra</h3>", unsafe_allow_html=True)
         
-        st.markdown(f"""
-            <div class="profile-badge">
-                <div class="profile-avatar">{initial}</div>
-                <div>
-                    <div style="font-weight: 600; font-size: 0.95rem;">{display_name}</div>
-                    <div style="font-size: 0.75rem; opacity: 0.7;">GenYatra Member</div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.write("") # spacing
-        
-        if st.button("➕ Start New Trip", use_container_width=True):
+        # 2. Clean 'New Chat' Button
+        if st.button("📝 New chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.pending_prompt = None
             st.session_state.itinerary_generated = False
             st.rerun()
             
-        if st.button("🔓 Logout", use_container_width=True):
-            st.session_state.user = None
-            st.session_state.messages = []
-            st.session_state.pending_prompt = None
-            st.session_state.itinerary_generated = False
-            st.session_state.auth_mode = "login"
-            st.rerun()
+        # 3. Sidebar Search input for History (Filters saved trips dynamically)
+        search_trips = st.text_input("Search trips...", placeholder="🔍 Search saved trips...", label_visibility="collapsed")
             
-        st.markdown("<br><hr style='opacity: 0.2;'><br>", unsafe_allow_html=True)
-        st.markdown("<div style='font-weight: 600; margin-bottom: 10px;'>Saved Trips</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight: 500; font-size: 0.95rem; margin-top: 15px; margin-bottom: 10px; padding-left: 5px;'>Saved Trips</div>", unsafe_allow_html=True)
         
         if st.session_state.user.get("is_guest"):
-            st.caption("Guest Mode: History disabled.")
+            st.markdown("<div style='padding-left: 5px; font-size: 0.85rem; opacity: 0.6;'>Guest Mode: History disabled.</div>", unsafe_allow_html=True)
         else:
             history = get_user_trips(st.session_state.user["localId"], st.session_state.user["idToken"])
             if history:
                 for trip_id, trip_data in history.items():
-                    with st.expander(f"📍 {trip_data.get('destination', 'Trip')}"):
-                        st.write(trip_data.get("itinerary", "")[:100] + "...")
+                    dest = trip_data.get('destination', 'Trip')
+                    # Filters based on search box input
+                    if search_trips.lower() in dest.lower():
+                        with st.expander(f"📍 {dest}"):
+                            st.write(trip_data.get("itinerary", "")[:100] + "...")
             else:
-                st.caption("No trips saved yet.")
+                st.markdown("<div style='padding-left: 5px; font-size: 0.85rem; opacity: 0.6;'>No trips saved yet.</div>", unsafe_allow_html=True)
 
+        # 4. Profile pushed to the bottom using CSS Flexbox (handled in CSS section)
+        display_name = "Explorer" if st.session_state.user.get("is_guest") else extract_first_name(st.session_state.user['email'])
+        
+        with st.popover(f"⚙️ Settings and help", use_container_width=True):
+            st.markdown(f"<div style='font-weight: 600; font-size: 1rem;'>{display_name}</div><div style='font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;'>GenYatra Member</div>", unsafe_allow_html=True)
+            if st.button("🔓 Logout", use_container_width=True):
+                st.session_state.user = None
+                st.session_state.messages = []
+                st.session_state.pending_prompt = None
+                st.session_state.itinerary_generated = False
+                st.session_state.auth_mode = "login"
+                st.rerun()
+
+    # --- FULL SCREEN DYNAMIC LAYOUT ---
     _, main_ui_col, _ = st.columns([0.5, 3.0, 0.5])
     
     with main_ui_col:
@@ -555,11 +531,12 @@ else:
             
             st.markdown("<div class='anim-3'>", unsafe_allow_html=True)
             with st.form("initial_search", clear_on_submit=True, border=False):
-                search_col, btn_col = st.columns([6, 1])
+                # Using 8:1 ratio ensures tightness, overridden natively by CSS flex layout
+                search_col, btn_col = st.columns([8, 1])
                 with search_col:
                     first_input = st.text_input("Search", placeholder="Ask GenYatra to plan your trip...", label_visibility="collapsed")
                 with btn_col:
-                    # Up Arrow replaces "Plan" to replicate the Gemini circular send button
+                    # Circular Arrow Button replacing text
                     submit_search = st.form_submit_button("↑")
                 
                 if submit_search and first_input:
