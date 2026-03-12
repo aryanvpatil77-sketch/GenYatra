@@ -27,18 +27,21 @@ GEMINI_KEY = st.secrets.get("GEMINI_KEY", st.secrets.get("GEMINI_API_KEY", ""))
 FIREBASE_API_KEY = st.secrets.get("FIREBASE_API_KEY", "")
 FIREBASE_DB_URL = st.secrets.get("FIREBASE_DB_URL", "")
 
-# --- 4. PREMIUM THEME-AGNOSTIC CSS & GLITCH FIXES ---
+# --- 4. STABLE THEME-AGNOSTIC CSS & GLITCH FIXES ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
     
-    * { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+    /* CRITICAL FIX: Apply font only to text, NEVER to icons to prevent "expand_more" glitch */
+    html, body, [class*="css"], p, h1, h2, h3, h4, h5, h6, input, button, textarea {
+        font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+    span.material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+    }
 
     #MainMenu, footer, [data-testid="stDecoration"] { display: none !important; }
     header { background: transparent !important; box-shadow: none !important; }
-    
-    [data-testid="collapsedControl"] { display: flex !important; opacity: 1 !important; z-index: 99999 !important; }
-    [data-testid="collapsedControl"] svg { fill: #5F6368 !important; }
     
     [data-testid="stAppViewContainer"], main, [data-testid="stBottomBlock"], [data-testid="stBottom"] { 
         background: transparent !important; background-color: transparent !important; 
@@ -46,20 +49,11 @@ st.markdown("""
     
     .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; }
     [data-testid="InputInstructions"] { display: none !important; }
-    
-    /* Animations */
-    @keyframes slideUpFade {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    .anim-1 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-    .anim-2 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
-    .anim-3 { animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
 
-    /* Login Page Styling Fixes */
-    .brand-container { text-align: center; margin-top: 5vh; margin-bottom: 10px; }
-    .welcome-to { color: #FF9933 !important; font-size: 1.3rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin-bottom: 15px; }
-    .login-logo { max-width: 250px; margin: 0 auto 30px auto; display: block; }
+    /* Login Page Styling Fixes (Removed Welcome Back) */
+    .brand-container { text-align: center; margin-top: 8vh; margin-bottom: 10px; }
+    .welcome-to { color: #FF9933 !important; font-size: 1.4rem; font-weight: 600; letter-spacing: 2px; text-transform: lowercase; margin-bottom: 15px; }
+    .login-logo { max-width: 280px; margin: 0 auto 40px auto; display: block; }
     .divider { text-align: center; opacity: 0.4; margin: 20px 0; font-size: 0.85rem; font-weight: 600; }
 
     /* Home Screen Typography */
@@ -80,19 +74,24 @@ st.markdown("""
         margin-top: 0px; margin-bottom: 40px; text-align: left; line-height: 1.2;
     }
 
-    /* --- THE SEARCH PILL --- */
+    /* --- THE SEAMLESS SEARCH PILL (Perfect Right Alignment) --- */
     [data-testid="stForm"] { 
-        background-color: rgba(128, 128, 128, 0.08) !important; 
+        background-color: #f0f4f9 !important; /* Soft grey */
         border-radius: 40px !important; 
-        padding: 6px 8px 6px 24px !important;
-        border: 1px solid rgba(128, 128, 128, 0.2) !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+        padding: 6px 8px 6px 24px !important; /* Extremely tight right padding */
+        border: none !important;
+        box-shadow: none !important;
+    }
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stForm"], [data-testid="stChatInput"] { background-color: #1e1f20 !important; }
     }
     
+    /* Stop Streamlit from adding margins inside the form */
     [data-testid="stForm"] [data-testid="stHorizontalBlock"] { gap: 0px !important; align-items: center !important; }
     [data-testid="stForm"] [data-testid="column"]:first-child { width: 100% !important; flex: 1 1 auto !important; }
     [data-testid="stForm"] [data-testid="column"]:last-child { width: auto !important; flex: 0 0 auto !important; }
     
+    /* Remove the "Box inside a Box" completely */
     [data-testid="stForm"] > div,
     [data-testid="stForm"] div[data-baseweb="input"],
     [data-testid="stForm"] div[data-baseweb="base-input"],
@@ -104,7 +103,6 @@ st.markdown("""
         background-color: transparent !important; border: none !important; font-size: 1.15rem !important;
         padding: 10px 0px !important; margin: 0px !important; box-shadow: none !important; color: inherit !important;
     }
-    [data-testid="stForm"] input::placeholder { opacity: 0.5; font-weight: 400; }
     [data-testid="stForm"] input:focus { border: none !important; box-shadow: none !important; background-color: transparent !important; }
 
     div[data-testid="stFormSubmitButton"] {
@@ -112,6 +110,7 @@ st.markdown("""
         height: 100%; margin: 0px !important; padding: 0px !important;
     }
     
+    /* The Solid Black Circular Send Button with Up Arrow */
     div[data-testid="stFormSubmitButton"] button {
         background-color: #131314 !important; color: #FFFFFF !important; 
         border: none !important; border-radius: 50% !important; 
@@ -122,10 +121,15 @@ st.markdown("""
     }
     div[data-testid="stFormSubmitButton"] button:hover { transform: scale(1.05); }
 
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stFormSubmitButton"] button { background-color: #FFFFFF !important; color: #131314 !important; }
+    }
+
+    /* Standard Chat Input matching the pill */
     [data-testid="stChatInput"] {
-        background-color: rgba(128, 128, 128, 0.08) !important;
+        background-color: #f0f4f9 !important;
         border-radius: 40px !important;
-        border: 1px solid rgba(128, 128, 128, 0.2) !important;
+        border: none !important;
         padding: 6px 8px 6px 24px !important;
     }
     [data-testid="stChatInputSubmitButton"] {
@@ -135,48 +139,34 @@ st.markdown("""
         height: 40px !important; width: 40px !important;
     }
     [data-testid="stChatInputSubmitButton"] svg { fill: white !important; }
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stChatInputSubmitButton"] { background-color: #FFFFFF !important; }
+        [data-testid="stChatInputSubmitButton"] svg { fill: #131314 !important; }
+    }
 
-    /* --- SIDEBAR PREMIUM UPGRADE & GLITCH FIX --- */
+    /* --- SIDEBAR STABLE LAYOUT --- */
     [data-testid="stSidebar"] {
         background-color: rgba(128,128,128,0.02) !important;
         border-right: 1px solid rgba(128,128,128,0.1) !important;
     }
     
-    /* NUKE THE "expand_more" TEXT GLITCH COMPLETELY */
-    [data-testid="stPopover"] button span.material-symbols-rounded,
-    [data-testid="stPopover"] button [data-testid="stIconMaterial"],
-    [data-testid="stPopover"] button div:nth-child(2) {
-        display: none !important;
-        font-size: 0px !important;
-        color: transparent !important;
-    }
-    
-    [data-testid="stSidebar"] > div:first-child > div:nth-child(2) > div {
-        display: flex; flex-direction: column; height: 100%;
-    }
-    [data-testid="stSidebar"] [data-testid="stPopover"] { margin-top: auto !important; margin-bottom: 20px !important; }
-    
     [data-testid="stSidebar"] [data-testid="stTextInput"] input {
         background-color: rgba(128, 128, 128, 0.08) !important;
         border: 1px solid rgba(128, 128, 128, 0.1) !important;
         border-radius: 12px !important;
-        padding: 12px 15px !important;
-        font-size: 0.95rem !important;
+        padding: 10px 15px !important;
     }
     
-    [data-testid="stSidebar"] button[kind="secondary"], [data-testid="stPopover"] > button {
+    [data-testid="stSidebar"] button[kind="secondary"] {
         border: none !important; background-color: transparent !important; border-radius: 8px !important;
-        transition: background-color 0.2s ease !important; font-weight: 500 !important; font-size: 1rem !important;
-        padding: 10px 12px !important; justify-content: flex-start !important; color: inherit !important; box-shadow: none !important;
+        font-weight: 500 !important; padding: 10px 12px !important; justify-content: flex-start !important; 
     }
-    [data-testid="stSidebar"] button[kind="secondary"]:hover, [data-testid="stPopover"] > button:hover {
-        background-color: rgba(128,128,128,0.08) !important;
-    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover { background-color: rgba(128,128,128,0.08) !important; }
     
     [data-testid="stSidebar"] [data-testid="stExpander"] { border: none !important; background-color: transparent !important; box-shadow: none !important; }
     [data-testid="stSidebar"] [data-testid="stExpander"] summary { padding: 8px 12px !important; border-radius: 8px; }
-    [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover { background-color: rgba(128,128,128,0.08) !important; }
 
+    /* --- MOBILE RESPONSIVENESS FIXES (Forces Pill to stay horizontal) --- */
     @media (max-width: 768px) {
         .gemini-greeting { font-size: 2.2rem !important; }
         .gemini-greeting-sub { font-size: 1.4rem !important; margin-bottom: 25px !important; }
@@ -188,15 +178,6 @@ st.markdown("""
     [data-testid="stSidebar"] img, .login-logo, .home-logo { transition: filter 0.3s ease; }
     @media (prefers-color-scheme: dark) {
         [data-testid="stSidebar"] img, .login-logo, .home-logo { filter: brightness(0) invert(1) !important; }
-        [data-testid="collapsedControl"] svg { fill: #E8EAED !important; }
-        .gemini-greeting {
-            background: -webkit-linear-gradient(74deg, #8ab4f8 0, #c58af9 9%, #f28b82 20%, #f28b82 24%, #c58af9 35%, #8ab4f8 44%, #c58af9 50%, #f28b82 56%, #e8eaed 75%, #e8eaed 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
-        div[data-testid="stFormSubmitButton"] button, [data-testid="stChatInputSubmitButton"] {
-            background-color: #FFFFFF !important; color: #131314 !important;
-        }
-        [data-testid="stChatInputSubmitButton"] svg { fill: #131314 !important; }
     }
     
     .login-btn-container [data-testid="stTextInput"] > div {
@@ -424,6 +405,7 @@ if not st.session_state.user:
         
         st.markdown("<div class='brand-container'><p class='welcome-to'>welcome to</p></div>", unsafe_allow_html=True)
         if encoded_logo:
+            # Using raw HTML <img> avoids the anchor link icon that Streamlit adds to headers
             st.markdown(f"<img src='data:image/jpeg;base64,{encoded_logo}' alt='GenYatra Logo' class='login-logo'>", unsafe_allow_html=True)
         else:
             st.markdown("<h1 style='text-align: center; color: #1A73E8; margin-bottom: 40px;'>GenYatra</h1>", unsafe_allow_html=True)
@@ -433,7 +415,7 @@ if not st.session_state.user:
                 email = st.text_input("Email", key="login_email")
                 password = st.text_input("Password", type="password", key="login_pass")
                 st.write("")
-                if st.button("Sign In", type="primary", use_container_width=True):
+                if st.button("Login", type="primary", use_container_width=True):
                     if FIREBASE_API_KEY == "PASTE_FIREBASE_WEB_API_KEY" or not FIREBASE_API_KEY:
                         st.error("Missing Firebase Key in code.")
                     else:
@@ -461,10 +443,11 @@ if not st.session_state.user:
                         res = sign_up(email, password)
                         if "error" in res: st.error(res["error"]["message"])
                         else: 
+                            # Auto-Login after successful account creation
                             st.session_state.user = {"email": email, "idToken": res["idToken"], "localId": res["localId"], "is_guest": False}
                             st.rerun()
             st.markdown("<div class='divider'>OR</div>", unsafe_allow_html=True)
-            if st.button("Already have an account? Log In", use_container_width=True):
+            if st.button("Already have an account? Login", use_container_width=True):
                 st.session_state.auth_mode = "login"
                 st.rerun()
             if st.button("Continue as Guest", use_container_width=True):
@@ -479,7 +462,7 @@ else:
         else:
             st.markdown("<h3 style='font-weight: 900; margin-top: 0px; margin-bottom: 20px;'>GenYatra</h3>", unsafe_allow_html=True)
         
-        if st.button("＋ New chat", use_container_width=True):
+        if st.button("📝 New chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.pending_prompt = None
             st.session_state.itinerary_generated = False
@@ -502,10 +485,13 @@ else:
             else:
                 st.markdown("<div style='padding-left: 5px; font-size: 0.85rem; opacity: 0.6;'>No trips saved yet.</div>", unsafe_allow_html=True)
 
+        st.write("<br>", unsafe_allow_html=True)
+
+        # STABLE FIX: Using st.expander instead of st.popover to prevent CSS icon text glitches
         display_name = "Explorer" if st.session_state.user.get("is_guest") else extract_first_name(st.session_state.user['email'])
         
-        with st.popover(f"Settings and help", use_container_width=True):
-            st.markdown(f"<div style='font-weight: 600; font-size: 1rem;'>{display_name}</div><div style='font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;'>GenYatra Member</div>", unsafe_allow_html=True)
+        with st.expander(f"👤 Profile: {display_name}"):
+            st.markdown("<div style='font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;'>GenYatra Member</div>", unsafe_allow_html=True)
             if st.button("Logout", use_container_width=True):
                 st.session_state.user = None
                 st.session_state.messages = []
@@ -528,6 +514,7 @@ else:
             
             st.markdown("<div class='anim-3'>", unsafe_allow_html=True)
             with st.form("initial_search", clear_on_submit=True, border=False):
+                # Columns overridden natively by CSS flex to guarantee tight button fit
                 search_col, btn_col = st.columns([8, 1])
                 with search_col:
                     first_input = st.text_input("Search", placeholder="Ask GenYatra to plan your trip...", label_visibility="collapsed")
